@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stierací Los</title>
+    <style>
+        body {
+            position: fixed;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #cc3333;
+            color: white;
+            font-family: 'Bangers', Arial, sans-serif;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body, body * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="84" height="84" viewBox="0 0 64 64"><text y="50%" x="50%" font-size="48" text-anchor="middle" alignment-baseline="middle">🪙</text></svg>') 32 32, auto !important;
+        }
+
+        #lotto-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            background-color: #fff;
+            border-radius: 15px;
+            
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5px;
+            z-index: 1;
+        }
+
+        .symbol {
+            font-size: 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #scratch-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+            border-radius: 10px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 4;
+        }
+
+        #message {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #restart-button {
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #restart-button:hover {
+            background-color: #ffdb4d;
+        }
+    #sunburst {
+            position: absolute;
+            top: -100;
+            left: -100;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(circle, #B41E1C 0%, rgba(0, 0, 0, 0.7) 80%), repeating-conic-gradient(#5C0200 0deg 10deg, #ff0400 10deg 20deg);
+            animation: rotateSunburst 55s linear infinite;
+            z-index: 0;
+            border-radius: 100%;
+        }
+
+        @keyframes rotateSunburst {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #lotto-container, #overlay {
+            position: relative;
+            z-index: 2;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+<div id="sunburst"></div>
+
+<div id="lotto-container">
+    <canvas id="scratch-area"></canvas>
+</div>
+
+<div id="overlay">
+    <div id="message"></div>
+    <button id="restart-button">Ta zetri znova ňe?</button>
+</div>
+
+<script>
+    let canvas = document.getElementById('scratch-area');
+    let ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+
+    const symbols = ['🍀', '🔱', '🍒', '💎', '💰', '🎱'];
+    const container = document.getElementById('lotto-container');
+    const messages = [
+        'Pregamblil si dom, ale však skús to znova, banka požičia!',
+        'Kámo, zas si prehral! Neviem, čo budeš žrať tento mesiac, ešte že na los sú vždy lóve!',
+        'Wow, už si tu zas! Tvoja peňaženka musí byť nadšená z tvojho "hráčskeho talentu"!',
+        'Prehral si? Tak si aspoň ušetríš na obedy! Skús to znova, šampión!'
+        
+    ];
+
+    // Fisher-Yates Shuffle for better random distribution
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function placeSymbols() {
+        container.querySelectorAll('.symbol').forEach(el => el.remove()); 
+
+        let selectedSymbols = [];
+        while (selectedSymbols.length < 9) {
+            let symbol = symbols[Math.floor(Math.random() * symbols.length)];
+            let count = selectedSymbols.filter(s => s === symbol).length;
+            if (count < 2) {
+                selectedSymbols.push(symbol);
+            }
+        }
+
+        for (let i = 0; i < 9; i++) {
+            let symbol = document.createElement('div');
+            symbol.classList.add('symbol');
+            symbol.innerText = selectedSymbols[i];
+            container.appendChild(symbol);
+        }
+    }
+
+    function resetCanvas() {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'silver';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    let isScratching = false;
+
+    function scratch(e) {
+        if (!isScratching) return;
+
+        let rect = canvas.getBoundingClientRect();
+        let x = (e.clientX || e.touches[0].clientX) - rect.left;
+        let y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        checkCompletion();
+    }
+
+    function checkCompletion() {
+        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let pixels = imageData.data;
+        let erasedPixels = 0;
+
+        for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] === 0) {
+                erasedPixels++;
+            }
+        }
+
+        const totalPixels = canvas.width * canvas.height;
+        const erasedPercent = (erasedPixels / totalPixels) * 100;
+
+        if (erasedPercent >= 90) { // Adjusted from 99% to 90%
+            showMessage();
+        }
+    }
+
+    function showMessage() {
+        document.getElementById('message').innerText = messages[Math.floor(Math.random() * messages.length)];
+        document.getElementById('overlay').style.display = 'flex';
+        isScratching = false;
+    }
+
+    canvas.addEventListener('mousedown', function() {
+        isScratching = true;
+    });
+
+    canvas.addEventListener('mouseup', function() {
+        isScratching = false;
+    });
+
+    canvas.addEventListener('mousemove', scratch);
+
+    canvas.addEventListener('touchstart', function() {
+        isScratching = true;
+    });
+
+    canvas.addEventListener('touchend', function() {
+        isScratching = false;
+    });
+
+    canvas.addEventListener('touchmove', scratch);
+
+    document.getElementById('restart-button').addEventListener('click', function() {
+        resetCanvas();
+        placeSymbols();
+        document.getElementById('overlay').style.display = 'none';
+    });
+
+    resetCanvas();
+    placeSymbols();
+</script>
+
+</body>
+</html>
