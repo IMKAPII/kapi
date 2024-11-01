@@ -21,26 +21,27 @@
             margin: 0;
             position: relative;
             overflow: hidden;
+            user-select: none;
         }
-
+ 
         body, body * {
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="84" height="84" viewBox="0 0 64 64"><text y="50%" x="50%" font-size="48" text-anchor="middle" alignment-baseline="middle">🪙</text></svg>') 32 32, auto !important;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="0 0 64 64"><text y="50%" x="50%" font-size="48" text-anchor="middle" alignment-baseline="middle">🪙</text></svg>') 32 32, auto !important;
         }
-
+ 
         #lotto-container {
             position: relative;
             width: 300px;
             height: 300px;
             background-color: #fff;
             border-radius: 15px;
-            
+ 
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
             gap: 5px;
             z-index: 1;
         }
-
+ 
         .symbol {
             font-size: 2.5rem;
             display: flex;
@@ -50,7 +51,7 @@
             border-radius: 10px;
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
         }
-
+ 
         #scratch-area {
             position: absolute;
             top: 0;
@@ -61,7 +62,7 @@
             z-index: 2;
             border-radius: 10px;
         }
-
+ 
         #overlay {
             position: absolute;
             top: 0;
@@ -75,27 +76,27 @@
             flex-direction: column;
             z-index: 4;
         }
-
+ 
         #message {
             font-size: 1.5rem;
             text-align: center;
             margin-bottom: 20px;
         }
-
+ 
         #restart-button {
             padding: 10px 20px;
             background-color: #ffcc00;
-            color: #000;
+            color: #000000;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
         }
-
+ 
         #restart-button:hover {
-            background-color: #ffdb4d;
+            background-color: #ebbc00;
         }
-    #sunburst {
+        #sunburst {
             position: absolute;
             top: -100;
             left: -100;
@@ -106,13 +107,13 @@
             z-index: 0;
             border-radius: 100%;
         }
-
+ 
         @keyframes rotateSunburst {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        #lotto-container, #overlay {
+ 
+        #lotto-container {
             position: relative;
             z-index: 2;
             margin: auto;
@@ -121,22 +122,22 @@
 </head>
 <body>
 <div id="sunburst"></div>
-
+ 
 <div id="lotto-container">
     <canvas id="scratch-area"></canvas>
 </div>
-
+ 
 <div id="overlay">
     <div id="message"></div>
     <button id="restart-button">Ta zetri znova ňe?</button>
 </div>
-
+ 
 <script>
     let canvas = document.getElementById('scratch-area');
     let ctx = canvas.getContext('2d');
     canvas.width = 300;
     canvas.height = 300;
-
+ 
     const symbols = ['🍀', '🔱', '🍒', '💎', '💰', '🎱'];
     const container = document.getElementById('lotto-container');
     const messages = [
@@ -144,7 +145,6 @@
         'Kámo, zas si prehral! Neviem, čo budeš žrať tento mesiac, ešte že na los sú vždy lóve!',
         'Wow, už si tu zas! Tvoja peňaženka musí byť nadšená z tvojho "hráčskeho talentu"!',
         'Prehral si? Tak si aspoň ušetríš na obedy! Skús to znova, šampión!'
-        
     ];
 
     // Fisher-Yates Shuffle for better random distribution
@@ -157,7 +157,7 @@
     }
 
     function placeSymbols() {
-        container.querySelectorAll('.symbol').forEach(el => el.remove()); 
+        container.querySelectorAll('.symbol').forEach(el => el.remove());
 
         let selectedSymbols = [];
         while (selectedSymbols.length < 9) {
@@ -178,8 +178,21 @@
 
     function resetCanvas() {
         ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = 'silver';
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width * Math.cos(Math.PI / 7.2), canvas.height * Math.sin(Math.PI / 7.2));
+        gradient.addColorStop(0, '#a0a0a0');
+        gradient.addColorStop(0.25, '#e5e5e5');
+        gradient.addColorStop(0.5, '#b5b5b5');
+        gradient.addColorStop(0.75, '#e5e5e5');
+        gradient.addColorStop(1, '#a0a0a0');
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let img = new Image();
+        img.src = 'MINCA.svg';
+        img.onload = function() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(img, 100, 100, 100, 100);
+        };
     }
 
     let isScratching = false;
@@ -253,6 +266,6 @@
     resetCanvas();
     placeSymbols();
 </script>
-
+ 
 </body>
 </html>
